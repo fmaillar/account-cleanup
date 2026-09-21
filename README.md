@@ -146,3 +146,23 @@ python3 -m unittest discover -s tests -v
 - Account deletion endpoints are site-specific and may require login, CSRF tokens, email confirmation, CAPTCHA, or a grace period.
 - The toolkit does not send generic destructive POST requests.
 - Raw reports can contain personal data; do not commit `results/`.
+
+## HTTP deletion adapters
+
+The repository now includes a real HTTP deletion adapter for CCM:
+
+```bash
+python3 scripts/http_account_cleanup.py ccm --username old_username
+```
+
+The first run is a dry-run: it follows the official delete-account URL, discovers the login form, authenticates with an interactive password prompt, revisits the deletion page, and prints the final form it would submit.
+
+To actually submit the deletion confirmation:
+
+```bash
+python3 scripts/http_account_cleanup.py ccm --username old_username --yes
+```
+
+The password is read with `getpass`, kept only in memory, and never written to disk. The adapter preserves cookies and hidden/CSRF fields from the site's forms.
+
+Additional sites should be implemented as explicit adapters instead of generic destructive requests, because deletion flows differ in authentication, CSRF handling, confirmation fields, CAPTCHA, and grace periods.
