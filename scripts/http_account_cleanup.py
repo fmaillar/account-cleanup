@@ -17,11 +17,13 @@ import getpass
 import http.cookiejar
 import re
 import sys
+import subprocess
 import urllib.parse
 import urllib.request
 from html.parser import HTMLParser
 from dataclasses import dataclass, field
 from pathlib import Path
+from email.message import EmailMessage
 
 UA = "Mozilla/5.0 (X11; Linux x86_64) account-cleanup/1.0"
 
@@ -244,6 +246,72 @@ def ccm(username: str, yes: bool) -> int:
     return 0
 
 
+
+def ccm_privacy_request(
+    username: str,
+    *,
+    from_email: str | None,
+    sendmail: bool,
+) -> int:
+    profile_url = f"https://ccm.net/profile/user/{urllib.parse.quote(username)}"
+    recipient = "contact@ccm.net"
+    subject = f"Erasure request for residual public profile: {username}"
+    body = f"""Hello,
+
+I deleted my CCM account, but the public profile is still accessible at:
+
+{profile_url}
+
+The page still exposes personal data associated with the deleted account.
+Please erase the residual public profile and the personal data displayed on
+that page, and confirm when the URL no longer exposes the profile.
+
+Username: {username}
+
+This is an erasure request concerning my own account and personal data.
+
+Regards
+"""
+
+    msg = EmailMessage()
+    msg["To"] = recipient
+    msg["Subject"] = subject
+    if from_email:
+        msg["From"] = from_email
+    msg.set_content(body)
+
+    out = Path("/tmp/ccm-privacy-request.eml")
+    out.write_bytes(msg.as_bytes())
+    print(f"Prepared privacy request: {out}")
+    print(f"To: {recipient}")
+    print(f"Profile: {profile_url}")
+
+    if not sendmail:
+        print("Not sent. Re-run with --sendmail --from-email YOUR_ADDRESS to send via local sendmail.")
+        return 0
+
+    if not from_email:
+        print("ERROR: --from-email is required with --sendmail", file=sys.stderr)
+        return 2
+
+    sendmail_path = Path("/usr/sbin/sendmail")
+    if not sendmail_path.exists():
+        print("ERROR: /usr/sbin/sendmail not found", file=sys.stderr)
+        return 2
+
+    proc = subprocess.run(
+        [str(sendmail_path), "-t", "-oi"],
+        input=msg.as_bytes(),
+        check=False,
+    )
+    if proc.returncode != 0:
+        print(f"ERROR: sendmail exited with {proc.returncode}", file=sys.stderr)
+        return proc.returncode
+
+    print("Privacy erasure request submitted to local sendmail queue.")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="site", required=True)
@@ -252,9 +320,27 @@ def main() -> int:
     p.add_argument("--username", required=True)
     p.add_argument("--yes", action="store_true", help="submit the final deletion form")
 
+    p = sub.add_parser(
+        "ccm-privacy-request",
+        help="prepare or send an erasure request for a residual public CCM profile",
+    )
+    p.add_argument("--username", required=True)
+    p.add_argument("--from-email")
+    p.add_argument(
+        "--sendmail",
+        action="store_true",
+        help="send via /usr/sbin/sendmail instead of only creating /tmp/ccm-privacy-request.eml",
+    )
+
     args = ap.parse_args()
     if args.site == "ccm":
         return ccm(args.username, args.yes)
+    if args.site == "ccm-privacy-request":
+        return ccm_privacy_request(
+            args.username,
+            from_email=args.from_email,
+            sendmail=args.sendmail,
+        )
     return 2
 
 
