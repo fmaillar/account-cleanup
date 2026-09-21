@@ -50,13 +50,15 @@ scripts/run_sherlock.sh
 
 Results are written below `results/`.
 
-For Maigret, generate machine-readable reports with:
+For Maigret:
 
 ```bash
 scripts/run_maigret.sh
-python3 scripts/extract_maigret.py results/maigret
+scripts/extract_all.sh
 python3 scripts/build_cleanup_report.py results/maigret
 ```
+
+The Maigret extractor and HTML report automatically use `config/usernames.txt` as an allowlist when that file exists. This is important because profile metadata can contain other usernames; those secondary identifiers are shown separately as **Detected username**, but they no longer create unrelated cleanup entries.
 
 The last command creates:
 
