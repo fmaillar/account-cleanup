@@ -2,7 +2,6 @@
 set -euo pipefail
 
 mkdir -p results/extracts
-
 shopt -s nullglob
 
 holehe=(results/holehe/*.txt)
