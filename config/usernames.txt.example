@@ -1,0 +1,4 @@
+# One remembered username per line.
+# Copy to config/usernames.txt and keep the real file private.
+old_username
+another_username
