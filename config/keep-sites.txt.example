@@ -1,5 +1,5 @@
-# Optional: one site name per line.
-# Matches are case-insensitive substrings against Maigret site names.
-# Copy to config/keep-sites.txt.
-GitHub
-GitLab
+# Optional broad fallback only.
+# Prefer exact username+site rules in config/account-rules.tsv.
+#
+# Example (use cautiously):
+# GitHub
