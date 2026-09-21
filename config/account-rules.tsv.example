@@ -1,0 +1,5 @@
+username	site	action	reason
+my_current_username	GitHub	keep	current account to retain
+old_username	Example Forum	cleanup	confirmed old account to remove
+old_username	Example Service	requested	deletion request already sent
+old_username	Example Archive	false-positive	confirmed to belong to somebody else
