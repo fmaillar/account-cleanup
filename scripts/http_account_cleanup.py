@@ -183,6 +183,7 @@ def confirmation_values(form: Form) -> dict[str, str]:
 def ccm(username: str, yes: bool) -> int:
     delete_url = "https://auth.ccm.net/user/delete_account"
     b = Browser()
+    password: str | None = None
 
     status, url, html = b.get(delete_url)
     print(f"GET {delete_url} -> {status} {url}")
@@ -215,6 +216,19 @@ def ccm(username: str, yes: bool) -> int:
         return 0
 
     values = confirmation_values(form)
+
+    # CCM asks for the account password again on the deletion form.
+    password_fields = [
+        i.get("name")
+        for i in form.inputs
+        if i.get("type", "").lower() == "password" and i.get("name")
+    ]
+    if password_fields:
+        if password is None:
+            password = getpass.getpass("CCM password for deletion: ")
+        for field_name in password_fields:
+            values[field_name] = password
+
     status, final_url, body = b.submit(url, form, values)
     debug_path = Path("/tmp/ccm-delete-response.html")
     debug_path.write_text(body, encoding="utf-8")
