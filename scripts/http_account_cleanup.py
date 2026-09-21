@@ -21,6 +21,7 @@ import urllib.parse
 import urllib.request
 from html.parser import HTMLParser
 from dataclasses import dataclass, field
+from pathlib import Path
 
 UA = "Mozilla/5.0 (X11; Linux x86_64) account-cleanup/1.0"
 
@@ -215,7 +216,10 @@ def ccm(username: str, yes: bool) -> int:
 
     values = confirmation_values(form)
     status, final_url, body = b.submit(url, form, values)
+    debug_path = Path("/tmp/ccm-delete-response.html")
+    debug_path.write_text(body, encoding="utf-8")
     print(f"DELETE REQUEST -> {status} {final_url}")
+    print(f"Saved final response: {debug_path}")
 
     lower = body.casefold()
     if any(x in lower for x in ("account deleted", "account has been deleted", "compte supprim", "désinscrit")):
