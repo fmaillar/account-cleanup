@@ -3,6 +3,7 @@ config/emails.txt
 config/usernames.txt
 config/keep-sites.txt
 config/ignore-sites.txt
+config/account-rules.tsv
 
 # Scan output / personal data
 results/
