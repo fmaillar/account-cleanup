@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import fnmatch
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -62,6 +63,33 @@ def matching_rule(rules: list[Rule], username: str, site: str) -> Rule | None:
     return max(candidates, default=(0, -1, None), key=lambda x: (x[0], x[1]))[2]
 
 
+def metadata_usernames(metadata: str) -> set[str]:
+    """Extract username-like identifiers from flattened Maigret metadata."""
+    if not metadata:
+        return set()
+
+    keys = {
+        "username",
+        "imgur_username",
+        "periscope_username",
+        "tiktok_username",
+        "twitch_username",
+        "picsart_username",
+        "gravatar_username",
+    }
+
+    found: set[str] = set()
+    for part in metadata.split(";"):
+        if "=" not in part:
+            continue
+        key, value = part.split("=", 1)
+        key = key.strip().casefold()
+        value = value.strip()
+        if key in keys and value:
+            found.add(value)
+    return found
+
+
 def classify_row(
     row: dict[str, str],
     *,
@@ -84,6 +112,17 @@ def classify_row(
 
     if detected and query.casefold() != detected.casefold():
         return "false-positive", "detected username differs from scanned username"
+
+    metadata_users = metadata_usernames(metadata)
+    conflicting = sorted(
+        value for value in metadata_users
+        if value.casefold() != query.casefold()
+    )
+    if conflicting:
+        return (
+            "false-positive",
+            "metadata username differs from scanned username: " + ", ".join(conflicting),
+        )
 
     if any(token.casefold() in site_cf for token in keep_sites):
         return "keep", "site configured to keep"
