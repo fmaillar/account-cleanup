@@ -166,3 +166,43 @@ python3 scripts/http_account_cleanup.py ccm --username old_username --yes
 The password is read with `getpass`, kept only in memory, and never written to disk. The adapter preserves cookies and hidden/CSRF fields from the site's forms.
 
 Additional sites should be implemented as explicit adapters instead of generic destructive requests, because deletion flows differ in authentication, CSRF handling, confirmation fields, CAPTCHA, and grace periods.
+
+## Site-wide deletion/contact audit
+
+The repository tracks deletion/contact channels for every site currently found in the Maigret result set:
+
+```bash
+bash scripts/audit_cleanup.sh
+```
+
+This performs GET-only probes against the configured self-service deletion and support/contact URLs and writes:
+
+```text
+results/site-channels.tsv
+results/deletion-plan.tsv
+```
+
+No destructive POST is sent by the audit.
+
+For sites with a conventional HTML support/privacy form, a generic requester can preserve hidden/CSRF fields and submit a personal-data erasure request:
+
+```bash
+python3 scripts/contact_privacy_request.py \\
+  --site Ccm \\
+  --username old_username \\
+  --profile-url 'https://example.invalid/profile/old_username' \\
+  --from-email you@example.org \\
+  --name 'Your Name'
+```
+
+Add `--yes` to submit. The requester refuses forms with CAPTCHA/reCAPTCHA instead of pretending that the request succeeded.
+
+To process every account explicitly classified as `cleanup` in one pass:
+
+```bash
+python3 scripts/request_cleanup_queue.py \\
+  --from-email you@example.org \\
+  --name 'Your Name'
+```
+
+Add `--yes` only after reviewing the dry run. The bulk runner never acts on `review`, `keep`, or `false-positive` entries.
