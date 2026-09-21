@@ -60,9 +60,32 @@ def iter_reports(root: Path):
         yield from sorted(root.rglob("report_*_simple.json"))
 
 
-def load_rows(root: Path):
+def requested_username(path: Path) -> str:
+    name = path.name
+    prefix = "report_"
+    suffix = "_simple.json"
+    if name.startswith(prefix) and name.endswith(suffix):
+        return name[len(prefix):-len(suffix)]
+    return ""
+
+
+def load_lines(path: Path | None) -> list[str]:
+    if not path or not path.exists():
+        return []
+    return [
+        line.strip()
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+
+
+def load_rows(root: Path, allowed_usernames: set[str]):
     rows = []
     for path in iter_reports(root):
+        query_username = requested_username(path)
+        if allowed_usernames and query_username.casefold() not in allowed_usernames:
+            continue
+
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
@@ -70,36 +93,30 @@ def load_rows(root: Path):
             continue
         if not isinstance(data, dict):
             continue
+
         for site, item in data.items():
             if not isinstance(item, dict) or status_name(item).lower() != "claimed":
                 continue
             st = item.get("status")
             st = st if isinstance(st, dict) else {}
             metadata = flatten(first(st.get("ids"), item.get("ids"), {}))
-            username = str(first(st.get("username"), item.get("username"), metadata.get("username")))
+            detected_username = str(
+                first(st.get("username"), item.get("username"), metadata.get("username"))
+            )
             url = str(first(st.get("url"), item.get("url_user"), item.get("url")))
             if not url:
                 continue
             rows.append(
                 {
                     "site": str(site),
-                    "username": username,
+                    "query_username": query_username,
+                    "detected_username": detected_username,
                     "url": url,
                     "metadata": metadata,
                     "source": str(path),
                 }
             )
     return rows
-
-
-def load_keep(path: Path | None) -> list[str]:
-    if not path or not path.exists():
-        return []
-    return [
-        line.strip().lower()
-        for line in path.read_text(encoding="utf-8").splitlines()
-        if line.strip() and not line.lstrip().startswith("#")
-    ]
 
 
 def verify(url: str, timeout: float) -> tuple[str, str]:
@@ -118,22 +135,28 @@ def main() -> int:
     ap.add_argument("input", type=Path, help="Maigret result directory or simple JSON report")
     ap.add_argument("-o", "--output", type=Path, default=Path("results/cleanup-report.html"))
     ap.add_argument("--keep-sites", type=Path, default=Path("config/keep-sites.txt"))
+    ap.add_argument(
+        "--usernames-file",
+        type=Path,
+        default=Path("config/usernames.txt"),
+        help="allowlist of scanned usernames; filtering is disabled if the file does not exist",
+    )
     ap.add_argument("--workers", type=int, default=12)
     ap.add_argument("--timeout", type=float, default=8.0)
     ap.add_argument("--no-http", action="store_true", help="do not verify profile URLs")
     args = ap.parse_args()
 
-    rows = load_rows(args.input)
-    keep = load_keep(args.keep_sites)
+    allowed = {x.casefold() for x in load_lines(args.usernames_file)}
+    keep = [x.casefold() for x in load_lines(args.keep_sites)]
+    rows = load_rows(args.input, allowed)
 
-    # De-duplicate exact Maigret hits.
     unique = {}
     for row in rows:
-        unique[(row["site"], row["username"], row["url"])] = row
+        unique[(row["site"], row["query_username"], row["url"])] = row
     rows = list(unique.values())
 
     for row in rows:
-        row["keep"] = any(token in row["site"].lower() for token in keep)
+        row["keep"] = any(token in row["site"].casefold() for token in keep)
         row["http"] = "-"
         row["final_url"] = row["url"]
 
@@ -144,11 +167,13 @@ def main() -> int:
                 row = futures[future]
                 row["http"], row["final_url"] = future.result()
 
-    rows.sort(key=lambda r: (r["keep"], r["username"].lower(), r["site"].lower()))
+    rows.sort(
+        key=lambda r: (r["keep"], r["query_username"].casefold(), r["site"].casefold())
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
     body = []
-    for i, row in enumerate(rows):
+    for row in rows:
         meta = "<br>".join(
             f"<b>{html.escape(k)}</b>: {html.escape(v)}"
             for k, v in row["metadata"].items()
@@ -159,9 +184,11 @@ def main() -> int:
         search_url = f"https://www.google.com/search?q={search_q}"
         cls = "keep" if row["keep"] else ""
         default_state = "keep" if row["keep"] else "todo"
+        key = row["site"] + "|" + row["query_username"] + "|" + row["url"]
         body.append(
-            f"""<tr class="{cls}" data-key="{html.escape(row["site"] + "|" + row["username"] + "|" + row["url"])}">
-<td>{html.escape(row["username"])}</td>
+            f"""<tr class="{cls}" data-key="{html.escape(key)}">
+<td>{html.escape(row["query_username"])}</td>
+<td>{html.escape(row["detected_username"])}</td>
 <td>{html.escape(row["site"])}</td>
 <td>{html.escape(row["http"])}</td>
 <td>{meta}</td>
@@ -198,15 +225,16 @@ a {{ white-space: nowrap; }}
 </head>
 <body>
 <h1>Account cleanup</h1>
-<p>{len(rows)} claimed Maigret profile(s). HTTP status only checks reachability; it does not prove ownership.</p>
+<p>{len(rows)} claimed Maigret profile(s), restricted to configured usernames.
+HTTP status only checks reachability; it does not prove ownership.</p>
 <div class="controls">
 <button id="show-open">show unfinished only</button>
 <button id="show-all">show all</button>
 </div>
 <table>
 <thead><tr>
-<th>Username</th><th>Site</th><th>HTTP</th><th>Metadata</th>
-<th>Profile</th><th>Deletion help</th><th>State</th>
+<th>Scanned username</th><th>Detected username</th><th>Site</th><th>HTTP</th>
+<th>Metadata</th><th>Profile</th><th>Deletion help</th><th>State</th>
 </tr></thead>
 <tbody>
 {''.join(body)}
