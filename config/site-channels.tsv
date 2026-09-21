@@ -1,0 +1,62 @@
+site	mode	delete_url	contact_url	notes
+Academia.edu	self_service	https://www.academia.edu/settings	https://support.academia.edu/hc/en-us/requests/new	Account settings; probe support form if self-service is unavailable.
+Audiojungle	shared_account	https://account.envato.com/	https://help.market.envato.com/hc/en-us/requests/new	Envato Market uses one Envato account across AudioJungle/CodeCanyon/ThemeForest/VideoHive.
+CGTrader	self_service	https://www.cgtrader.com/profile/settings	https://help.cgtrader.com/hc/en-us/requests/new	Delete from settings when eligible; otherwise CGTrader support handles deletion.
+Calendly	self_service	https://calendly.com/app/personal/account	https://help.calendly.com/hc/en-us/requests/new	Account settings/support.
+Ccm	self_service	https://auth.ccm.net/user/delete_account	https://ccm.net/contact/23-how-to-delete-your-ccm-account	Account deletion is implemented by the CCM HTTP adapter; residual public profile may require contact form.
+ChaturBate	self_service	https://chaturbate.com/	https://support.chaturbate.com/hc/en-us/requests/new	Disable Account link is exposed while logged in; support form is official fallback.
+Chess	self_service	https://www.chess.com/settings/account	https://support.chess.com/en/	Account settings.
+Codecademy	self_service	https://www.codecademy.com/account	https://help.codecademy.com/hc/en-us/requests/new	Delete from account settings/help flow.
+Codecanyon	shared_account	https://account.envato.com/	https://help.market.envato.com/hc/en-us/requests/new	Shared Envato account.
+Codepen	self_service	https://codepen.io/settings/account	https://blog.codepen.io/documentation/	Account settings.
+Couchsurfing	self_service	https://www.couchsurfing.com/preferences	https://support.couchsurfing.org/hc/en-us/requests/new	Web Settings -> Delete Account; email confirmation required.
+DEV Community	self_service	https://dev.to/settings/account	https://dev.to/contact	Delete Account in Settings -> Account; support can complete GDPR deletion.
+DeviantART	self_service	https://www.deviantart.com/settings/deactivation	https://www.deviantartsupport.com/kb/en	Official deactivation flow; permanent after grace period if not reactivated.
+Diigo	discover	https://www.diigo.com/user_mana2	https://help.diigo.com/	Probe account-management page and support.
+Discogs	self_service	https://www.discogs.com/settings/user	https://support.discogs.com/hc/en-us/requests/new	Account settings/support.
+Erome	discover	https://www.erome.com/	https://www.erome.com/contact	Probe current account/contact flow before submitting anything.
+Flipboard	self_service	https://accounts.flipboard.com/	https://about.flipboard.com/help-center/	Account management/help center.
+Freesound	self_service	https://freesound.org/home/settings/	https://freesound.org/help/faq/	Delete-yourself option is documented in settings.
+Geocaching	self_service	https://www.geocaching.com/account/settings/account	https://www.geocaching.com/help/	Account settings -> Delete your account.
+GitHub	keep	https://github.com/settings/admin	https://support.github.com/	Current account; do not delete unless an exact local rule overrides keep.
+GitHubGist	shared_account	https://github.com/settings/admin	https://support.github.com/	Gists use the same GitHub account.
+GitLab	keep	https://gitlab.com/-/user_settings/account	https://about.gitlab.com/support/	Current account(s); do not delete unless exact local rule overrides keep.
+Google Scholar	no_account_result			Search result, not an account profile discovered by Maigret.
+Gumroad	self_service	https://gumroad.com/settings	https://gumroad.com/help	Account settings/help.
+HuggingFace	self_service	https://huggingface.co/settings/account	https://huggingface.co/contact	Account settings.
+ImgInn	no_account_result			Third-party viewer/aggregator result; no account deletion action.
+Imgur	self_service	https://imgur.com/account/settings/delete	https://help.imgur.com/hc/en-us/requests/new	Official delete-account flow.
+Instructables	self_service	https://www.instructables.com/account/settings/	https://www.instructables.com/contact/	Account settings/contact.
+Launchpad	self_service	https://launchpad.net/~{username}/+request-deactivation	https://help.launchpad.net/	Launchpad deactivation page is username-specific.
+Lichess	self_service	https://lichess.org/account/close	https://lichess.org/contact	Official close-account page; Lichess says not to request closure by email.
+Lobsters	discover	https://lobste.rs/settings	https://lobste.rs/about	Probe settings/about for current account-removal channel.
+Mamot	self_service	https://mamot.fr/settings/delete	https://mamot.fr/about/more	Mastodon-compatible delete-account settings.
+Memrise	self_service	https://app.memrise.com/settings/	https://memrise.zendesk.com/hc/en-us/requests/new	Account settings/support.
+Myspace	self_service	https://myspace.com/settings/account	https://help.myspace.com/hc/en-us/requests/new	Account settings/support.
+OnlyFans	self_service	https://onlyfans.com/my/settings/account	https://onlyfans.com/help	Account settings.
+OpenStreetMap	self_service	https://www.openstreetmap.org/account/delete	https://community.openstreetmap.org/	Self-service account deletion exists in account settings.
+Paypal	self_service	https://www.paypal.com/myaccount/settings/closeAccount	https://www.paypal.com/fr/cshelp/contact-us	Close-account flow in PayPal settings.
+Periscope	closed_service		https://help.x.com/	Periscope standalone service was discontinued; remaining identity is tied to X/Twitter where applicable.
+Picsart	self_service	https://picsart.com/settings	https://support.picsart.com/hc/en-us/requests/new	Account settings/support.
+Pinterest	self_service	https://www.pinterest.com/settings/account-settings/	https://help.pinterest.com/en/contact	Permanent deletion from Account management; email confirmation may be required.
+Polymarket	discover	https://polymarket.com/settings	https://help.polymarket.com/	Wallet/account model; probe support/privacy path before any request.
+Revolut.me	shared_account		https://help.revolut.com/	Revolut.me profile belongs to a Revolut account; closure is handled through Revolut account controls/support.
+Salon24.pl	discover	https://www.salon24.pl/	https://www.salon24.pl/	Probe logged-in settings/contact channel.
+Snapchat	self_service	https://accounts.snapchat.com/accounts/delete_account	https://help.snapchat.com/hc/en-us/requests/new	Official accounts portal; deletion starts a grace period.
+StackOverflow	self_service	https://stackoverflow.com/users/delete/current	https://stackoverflow.com/contact	Stack Exchange self-service account deletion.
+ThemeForest	shared_account	https://account.envato.com/	https://help.market.envato.com/hc/en-us/requests/new	Shared Envato account.
+TikTok	self_service	https://www.tiktok.com/setting	https://www.tiktok.com/legal/report/privacy	Account settings/privacy request fallback.
+Tistory	discover	https://www.tistory.com/	https://www.tistory.com/	Probe current Kakao/Tistory account management.
+Trello	shared_account	https://id.atlassian.com/manage-profile/account-preferences	https://support.atlassian.com/contact/	Trello uses Atlassian account deletion.
+TripAdvisor	self_service	https://www.tripadvisor.com/Settings-cp	https://www.tripadvisor.com/GeneralSupport	Account settings/support/privacy.
+Tumblr	self_service	https://www.tumblr.com/settings/account	https://www.tumblr.com/support	Account settings -> Delete account; credentials/2FA may be required.
+Twitch	self_service	https://www.twitch.tv/user/delete-account	https://help.twitch.tv/s/contactsupport	Official delete-account page.
+Twitter	self_service	https://x.com/settings/deactivate	https://help.x.com/forms/account-access/deactivate-or-close-account	X deactivation starts a 30-day deletion window.
+VideoHive	shared_account	https://account.envato.com/	https://help.market.envato.com/hc/en-us/requests/new	Shared Envato account.
+Vivino	self_service	https://www.vivino.com/settings	https://support.vivino.com/hc/en-us/requests/new	Account settings/support.
+Wikipedia	no_direct_delete		https://en.wikipedia.org/wiki/Wikipedia:Courtesy_vanishing	Wikimedia accounts generally cannot be deleted; courtesy vanishing/renaming can reduce public attribution.
+Windy	discover	https://community.windy.com/me/edit	https://community.windy.com/contact	Probe NodeBB account/settings/contact path.
+Xvideos	self_service	https://www.xvideos.com/account	https://info.xvideos.com/contact/	Account/settings or official contact channel; already requested in current queue.
+YouTube	shared_account	https://myaccount.google.com/deleteservices	https://support.google.com/youtube/answer/55759	Delete YouTube channel/content without necessarily deleting the Google account.
+domestika.org	self_service	https://www.domestika.org/account	https://support.domestika.org/hc/en-us/requests/new	Account settings/support.
+last.fm	self_service	https://www.last.fm/settings/account	https://support.last.fm/	Account settings include deletion.
