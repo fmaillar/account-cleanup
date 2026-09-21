@@ -2,6 +2,7 @@
 config/emails.txt
 config/usernames.txt
 config/keep-sites.txt
+config/ignore-sites.txt
 
 # Scan output / personal data
 results/
