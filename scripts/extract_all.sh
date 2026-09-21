@@ -18,6 +18,7 @@ fi
 if [[ -d results/maigret ]]; then
   python3 scripts/extract_maigret.py results/maigret     > results/extracts/maigret-claimed.tsv
   python3 scripts/extract_maigret.py results/maigret --json     > results/extracts/maigret-claimed.json
+  python3 scripts/classify_maigret.py results/extracts/maigret-claimed.tsv
 fi
 
 echo "Extracts written to results/extracts/"
