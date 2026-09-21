@@ -1,0 +1,5 @@
+# Optional sites/results to classify automatically as non-actionable.
+# Matches are case-insensitive substrings against Maigret site names.
+#
+# Example: search engines or mirrors that are not user accounts.
+Google Scholar
