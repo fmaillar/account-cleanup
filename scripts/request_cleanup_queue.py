@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Process every explicitly-confirmed cleanup row in one pass.
+"""Process every explicitly-confirmed cleanup row.
 
-For CCM, uses the dedicated authenticated HTTP adapter.
-For other sites, attempts the official web contact form from site-channels.tsv.
-Self-service delete URLs are still included in the summary because many require
-site-specific authentication/2FA and cannot be safely guessed.
+Priority:
+1. dedicated site adapter;
+2. authenticated self-service deletion URL;
+3. contact/privacy form only for sites without a self-service deletion flow.
+
+The runner never acts on review/keep/false-positive rows.
 """
 from __future__ import annotations
 
@@ -27,6 +29,11 @@ def main() -> int:
     ap.add_argument("--name", required=True)
     ap.add_argument("--yes", action="store_true")
     ap.add_argument("--registry", type=Path, default=Path("config/site-channels.tsv"))
+    ap.add_argument(
+        "--allow-contact-fallback",
+        action="store_true",
+        help="allow generic contact/privacy forms only when no self-service deletion URL exists",
+    )
     args = ap.parse_args()
 
     rows = read_tsv(args.queue)
@@ -38,49 +45,64 @@ def main() -> int:
         username = row["query_username"]
         profile = row["url"]
         meta = registry.get(site, {})
+        mode = meta.get("mode", "")
         contact = meta.get("contact_url", "")
-        delete_url = meta.get("delete_url", "")
+        delete_url = meta.get("delete_url", "").replace("{username}", username)
 
         print(f"\n=== {site} / {username} ===")
 
         if site == "Ccm":
             cmd = [
-                sys.executable,
-                "scripts/http_account_cleanup.py",
-                "ccm",
-                "--username",
-                username,
+                sys.executable, "scripts/http_account_cleanup.py", "ccm",
+                "--username", username,
             ]
             if args.yes:
                 cmd.append("--yes")
             rc = subprocess.run(cmd, check=False).returncode
-            summary.append((site, username, "ccm-adapter", str(rc)))
+            summary.append((site, username, "dedicated-adapter", str(rc)))
+            continue
+
+        if mode == "self_service" and delete_url:
+            cmd = [
+                sys.executable, "scripts/self_service_delete.py",
+                "--site", site,
+                "--username", username,
+                "--delete-url", delete_url,
+            ]
+            if args.yes:
+                cmd.append("--yes")
+            rc = subprocess.run(cmd, check=False).returncode
+            summary.append((site, username, "self-service", str(rc)))
+            continue
+
+        if mode == "shared_account":
+            print("SKIP: deletion would affect a shared parent account; dedicated adapter/manual confirmation required.")
+            if delete_url:
+                print(f"Parent-account URL: {delete_url}")
+            summary.append((site, username, "shared-account-skip", "not-submitted"))
+            continue
+
+        if args.allow_contact_fallback and contact:
+            cmd = [
+                sys.executable, "scripts/contact_privacy_request.py",
+                "--site", site,
+                "--username", username,
+                "--profile-url", profile,
+                "--from-email", args.from_email,
+                "--name", args.name,
+            ]
+            if args.yes:
+                cmd.append("--yes")
+            rc = subprocess.run(cmd, check=False).returncode
+            summary.append((site, username, "contact-fallback", str(rc)))
             continue
 
         if contact:
-            cmd = [
-                sys.executable,
-                "scripts/contact_privacy_request.py",
-                "--site",
-                site,
-                "--username",
-                username,
-                "--profile-url",
-                profile,
-                "--from-email",
-                args.from_email,
-                "--name",
-                args.name,
-            ]
-            if args.yes:
-                cmd.append("--yes")
-            rc = subprocess.run(cmd, check=False).returncode
-            summary.append((site, username, "contact-form", str(rc)))
-        elif delete_url:
-            print(f"Self-service deletion URL: {delete_url}")
-            summary.append((site, username, "self-service", "not-submitted"))
+            print("CONTACT AVAILABLE but not used automatically; pass --allow-contact-fallback if desired.")
+            print(f"Contact URL: {contact}")
+            summary.append((site, username, "contact-available", "not-submitted"))
         else:
-            print("No configured deletion/contact channel.")
+            print("No automatable deletion channel configured.")
             summary.append((site, username, "unconfigured", "not-submitted"))
 
     out = Path("results/cleanup-request-summary.tsv")
