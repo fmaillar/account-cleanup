@@ -204,6 +204,18 @@ def build_payload(form: Form) -> dict[str, str]:
     return data
 
 
+
+def add_login_submit(form: Form, data: dict[str, str]) -> None:
+    """Include the first named login submit control when the server expects it."""
+    for i in form.inputs:
+        if i.get("type", "").lower() == "submit" and i.get("name"):
+            data.setdefault(i["name"], i.get("value", ""))
+            return
+    for b in form.buttons:
+        if b.get("name"):
+            data.setdefault(b["name"], b.get("value", "") or b.get("_text", ""))
+            return
+
 def submit(browser: Browser, base: str, form: Form, data: dict[str, str]):
     target = urllib.parse.urljoin(base, form.action or base)
     if form.method == "post":
@@ -256,6 +268,7 @@ def main() -> int:
         login_value = args.login or input(f"Login identifier [{args.username}]: ").strip() or args.username
         password = getpass.getpass(f"{args.site} password: ")
         values = build_payload(login_form)
+        add_login_submit(login_form, values)
         if user_field:
             values[user_field] = login_value
         values[pass_field] = password
@@ -263,6 +276,9 @@ def main() -> int:
         status, url, body = submit(b, url, login_form, values)
         (outdir / f"{stem}-after-login.html").write_text(body, encoding="utf-8")
         print(f"LOGIN -> {status} {url}")
+        if "/login" in urllib.parse.urlparse(url).path.casefold() and pick_login_form(parse_forms(body)):
+            print("BLOCKED: login was not accepted; credentials or an extra authentication step are required.")
+            return 5
 
         status, url, body = b.get(args.delete_url)
         (outdir / f"{stem}-delete-page.html").write_text(body, encoding="utf-8")
