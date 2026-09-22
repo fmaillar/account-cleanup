@@ -27,4 +27,4 @@ mapfile -t usernames < <(
 mkdir -p "$outdir"
 
 echo "Scanning ${#usernames[@]} username(s) with Maigret..."
-maigret   "${usernames[@]}"   --max-connections "$connections"   --folderoutput "$outdir"   --html   --csv   --json simple
+maigret   "${usernames[@]}"   --no-recursion   --max-connections "$connections"   --folderoutput "$outdir"   --html   --csv   --json simple
