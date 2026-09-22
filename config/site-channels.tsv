@@ -27,7 +27,7 @@ HuggingFace	self_service	https://huggingface.co/settings/account	https://hugging
 ImgInn	no_account_result			Third-party viewer/aggregator result; no account deletion action.
 Imgur	self_service	https://imgur.com/account/settings/delete	https://help.imgur.com/hc/en-us/requests/new	Official delete-account flow.
 Instructables	self_service	https://www.instructables.com/account/settings/	https://www.instructables.com/contact/	Account settings/contact.
-Launchpad	self_service	https://launchpad.net/~{username}/+request-deactivation	https://help.launchpad.net/	Launchpad deactivation page is username-specific.
+Launchpad	self_service	https://launchpad.net/~{username}/+deactivate-account	https://help.launchpad.net/	Launchpad deactivation page is username-specific.
 Lichess	self_service	https://lichess.org/account/close	https://lichess.org/contact	Official close-account page; Lichess says not to request closure by email.
 Lobsters	discover	https://lobste.rs/settings	https://lobste.rs/about	Probe settings/about for current account-removal channel.
 Mamot	self_service	https://mamot.fr/settings/delete	https://mamot.fr/about/more	Mastodon-compatible delete-account settings.
