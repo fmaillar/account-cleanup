@@ -26,5 +26,11 @@ mapfile -t usernames < <(
 
 mkdir -p "$outdir"
 
+# Results are snapshots, not an append-only cache. Remove old Maigret reports so
+# recursive usernames from an earlier run cannot survive in a new archive.
+find "$outdir" -maxdepth 1 -type f \
+  \( -name 'report_*.csv' -o -name 'report_*_simple.json' -o -name 'report_*_plain.html' \) \
+  -delete
+
 echo "Scanning ${#usernames[@]} username(s) with Maigret..."
 maigret   "${usernames[@]}"   --no-recursion   --max-connections "$connections"   --folderoutput "$outdir"   --html   --csv   --json simple
