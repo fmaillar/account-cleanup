@@ -32,6 +32,7 @@ SUCCESS_RE = re.compile(
     re.I | re.S,
 )
 CAPTCHA_RE = re.compile(r"(g-recaptcha|hcaptcha|recaptcha|cf-turnstile|captcha)", re.I)
+AUTH_RE = re.compile(r"(login|log[-_ ]?in|sign[-_ ]?in|openid|oauth|auth)", re.I)
 
 
 @dataclass
@@ -126,19 +127,40 @@ def is_login_form(form: Form) -> bool:
 
 def deletion_score(form: Form) -> int:
     blob = form_blob(form)
+
+    # Never classify authentication/OpenID/OAuth forms as deletion forms,
+    # even if the surrounding page text mentions "deactivate" or "delete".
+    auth_blob = " ".join([
+        form.action,
+        form.attrs.get("id", ""),
+        form.attrs.get("name", ""),
+        form.attrs.get("class", ""),
+    ])
+    if AUTH_RE.search(auth_blob):
+        return -100
+
+    if any(i.get("type", "").lower() == "password" for i in form.inputs) and not any(
+        DELETE_RE.search(
+            " ".join(str(x.get(k, "")) for k in ("name", "id", "value", "placeholder"))
+        )
+        for x in form.inputs + form.buttons
+    ):
+        return -100
+
     score = 0
-    if DELETE_RE.search(blob):
+    # Strong evidence must come from controls/action, not arbitrary surrounding text.
+    if DELETE_RE.search(form.action):
         score += 12
-    if form.method == "post":
-        score += 3
     for b in form.buttons:
         if DELETE_RE.search(" ".join(str(v) for v in b.values())):
-            score += 8
+            score += 10
     for i in form.inputs:
         if i.get("type", "").lower() == "submit" and DELETE_RE.search(
-            i.get("value", "") + " " + i.get("name", "")
+            i.get("value", "") + " " + i.get("name", "") + " " + i.get("id", "")
         ):
-            score += 8
+            score += 10
+    if form.method == "post" and score:
+        score += 3
     return score
 
 
@@ -251,12 +273,22 @@ def main() -> int:
         return 4
 
     forms = parse_forms(body)
-    delete_form = pick_delete_form(forms)
+
+    parsed_url = urllib.parse.urlparse(url)
+    auth_redirect = (
+        AUTH_RE.search(parsed_url.path or "") is not None
+        or AUTH_RE.search(parsed_url.netloc or "") is not None
+    )
+
+    delete_form = None if auth_redirect else pick_delete_form(forms)
     password: str | None = None
 
     if delete_form is None:
         login_form = pick_login_form(forms)
         if login_form is None:
+            if auth_redirect:
+                print("BLOCKED: redirected to an authentication/OpenID/OAuth flow that is not a simple HTML username/password form.")
+                return 6
             print("BLOCKED: no server-rendered login or deletion form found (likely JS/OAuth/manual flow).")
             return 3
 
